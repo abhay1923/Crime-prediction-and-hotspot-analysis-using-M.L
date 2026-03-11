@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary Meta -->
+    <title>LiveSafe | Predictive Public Safety</title>
+    <meta name="description" content="AI-Powered Predictive Public Safety Platform for Delhi-NCR. Real-time crime hotspot prediction, SOS alerts, and community safety tools." />
+    <meta name="theme-color" content="#1e1b4b" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="LiveSafe | Predictive Public Safety" />
+    <meta property="og:description" content="AI-Powered safety platform for Delhi-NCR" />
+    <meta property="og:type" content="website" />
+
+    <!-- Favicon (inline SVG avoids an extra network request) -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>"
+    />
+
+    <!-- Preconnect to external origins to reduce latency -->
+    <link rel="preconnect" href="https://a.tile.openstreetmap.org" />
+    <link rel="preconnect" href="https://b.tile.openstreetmap.org" />
+    <link rel="preconnect" href="https://c.tile.openstreetmap.org" />
+  </head>
+
+  <body>
+    <noscript>
+      <div style="text-align:center;padding:2rem;font-family:sans-serif;">
+        LiveSafe requires JavaScript to run. Please enable JavaScript in your browser.
+      </div>
+    </noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

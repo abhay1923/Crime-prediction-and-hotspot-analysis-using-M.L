@@ -1,0 +1,104 @@
+version: '3.8'
+
+# ============================================================
+# LiveSafe — Docker Compose (Production-ready)
+# Usage:
+#   cp .env.example .env   # fill in real values first
+#   docker compose up -d
+# ============================================================
+
+services:
+  # ----------------------------------------------------------
+  # PostgreSQL + PostGIS
+  # ----------------------------------------------------------
+  postgres:
+    image: postgis/postgis:15-3.3-alpine
+    env_file: .env
+    environment:
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:       ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Optional: mount init scripts
+      # - ./supabase/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    # Do NOT expose 5432 to host in production — only backend needs it
+    # ports: ["5432:5432"]   # Uncomment only for local dev debugging
+
+  # ----------------------------------------------------------
+  # Express Backend
+  # ----------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      NODE_ENV:       production
+      PORT:           3000
+      DATABASE_URL:   postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      JWT_SECRET:     ${JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      FRONTEND_URL:   ${FRONTEND_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+    healthcheck:
+      test:
+        - "CMD"
+        - "node"
+        - "-e"
+        - "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    # Backend is NOT exposed directly; nginx proxies /api/* to it
+    # ports: ["3000:3000"]   # Uncomment only for local dev debugging
+
+  # ----------------------------------------------------------
+  # Frontend (Nginx SPA)
+  # ----------------------------------------------------------
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Bake API URL at build time — Vite needs these statically
+        VITE_API_URL:          ${VITE_API_URL:-/api}
+        VITE_SUPABASE_URL:     ${VITE_SUPABASE_URL:-}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:-}
+    ports:
+      - "80:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

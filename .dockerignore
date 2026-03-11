@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.gitignore
+*.md
+.env
+.env.*
+backend
+**/*.log
+coverage
+.nyc_output
+.vscode
+.idea
+**/__pycache__
+**/*.pyc

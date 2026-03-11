@@ -1,0 +1,43 @@
+# ============================================================
+# docker-compose.backup.yml
+#
+# Add-on compose file that runs the backup service.
+# Merge with main compose:
+#   docker compose -f docker-compose.yml -f docker-compose.backup.yml up -d
+# ============================================================
+version: '3.8'
+
+services:
+  # Runs daily at 02:00 UTC, keeps 7 days of backups
+  backup:
+    image: postgres:15-alpine
+    env_file: .env
+    environment:
+      POSTGRES_HOST:     postgres
+      POSTGRES_PORT:     5432
+      POSTGRES_DB:       ${POSTGRES_DB}
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      RETAIN_LOCAL:      7
+      # Set S3_BUCKET=s3://your-bucket to enable S3 upload
+      S3_BUCKET:         ${S3_BACKUP_BUCKET:-}
+    volumes:
+      - ./scripts/backup.sh:/backup.sh:ro
+      - backup_data:/var/backups/livesafe
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Run daily at 02:00 UTC using supercronic
+    entrypoint: >
+      sh -c "
+        apk add --no-cache bash aws-cli &&
+        echo '0 2 * * * /backup.sh' > /etc/crontabs/root &&
+        crond -f -L /dev/stdout
+      "
+    restart: unless-stopped
+
+volumes:
+  backup_data:
+    driver: local
