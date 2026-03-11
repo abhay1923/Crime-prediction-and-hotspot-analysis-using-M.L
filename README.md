@@ -54,8 +54,8 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/abhay1923/Predictivepublicsafetyapp.git
-cd Predictivepublicsafetyapp
+git clone https://github.com/abhay1923/Crime-prediction-and-hotspot-analysis-using-M.L.git
+cd Crime-prediction-and-hotspot-analysis-using-M.L
 ```
 
 ### 2. Set up environment variables
